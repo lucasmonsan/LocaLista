@@ -1,4 +1,3 @@
-// src/App.tsx
 import styled from 'styled-components';
 
 function App() {

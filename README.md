@@ -1,54 +1,105 @@
-# React + TypeScript + Vite
+# **Documento do Projeto - Mapa de Reviews de Aluguéis**
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+---
 
-Currently, two official plugins are available:
+## **0. Pré-requisitos**
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- [] Appwrite
+- [] Node.js 18+
+- [] Git
+- [] Zed/VSCodium + Prettier
+- [] Bun
 
-## Expanding the ESLint configuration
+## **1. Objetivo**
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Desenvolver um web app onde usuários:
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+- Pesquisem reviews por **cidade**
+- Visualizem um **pin único** no centro do município
+- Filtrem reviews por **bairro ou rua** diretamente no modal
+- Cadastre sua própria review
+
+---
+
+## **2. Fluxo Principal**
+
+```mermaid
+flowchart TD
+  A[Página Inicial] --> B[Campo de busca: "Digite uma cidade"]
+  B --> C[Mapa mostra pin no centro da cidade]
+  C --> D[Clique no pin abre modal]
+  D --> E[Campo de busca: "Filtrar por bairro/rua"]
+  E --> F[Lista dinâmica de reviews]
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## **3. Tecnologias**
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+| Categoria | Tecnologias Escolhidas   | Justificativa                  |
+| --------- | ------------------------ | ------------------------------ |
+| Frontend  | React + TypeScript + Bun | Tipagem estática + componentes |
+| Mapas     | Leaflet + OpenStreetMap  | Open-source + leve             |
+| Backend   | Appwrite Cloud           | Autenticação + DB pronto       |
+| UI        | Styled Components        | Controle total sobre estilos   |
+| Fonte     | Manrope                  | Google Fonts                   |
+| Deploy    | Surge.sh                 | Open-source sempre             |
+
+---
+
+## **4. Modelo de Dados**
+
+reviews (TODOS OBRIGATÓRIOS)
+| Campo | Tipo |
+|--------------|----------|
+| city | string |
+| neighborhood | string |
+| street | string |
+| number | number |
+| rating | number |
+| comentary | string |
+| userId | string |
+| createdAt | DateTime |
+| updatedAt | DateTime |
+
+---
+
+## **5. Regras de Buscas**
+
+- Passo 1: Busca por cidade → mostra pin no centro geográfico e centraliza a cidade no mapa
+  map.setView([-20.1396, -44.8902], 14); // Exemplo: Centralizar mapa em Divinópolis
+- Passo 2: No modal, filtrar no Appwrite assim:
+  await databases.listDocuments(
+  'reviews_db',
+  'reviews_coll',
+  [
+  Query.equal('city', selectedCity),
+  Query.or([
+  Query.search('neighborhood', searchTerm),
+  Query.search('street', searchTerm),
+  Query.equal('number', parseInt(searchTerm))
+  ])
+  ]
+  );
+
+---
+
+## **6. Checklist de Implementação**
+
+- Dia 1
+- - Setup do projeto React + TypeScript
+- - Configuração do Appwrite Cloud (Database + Auth)
+- - Telas de login/cadastro/recuperação com React Hook Form
+- - Roteamento básico
+- Dia 2
+- - Integração do Leaflet (Mapa base + controles)
+- - Lógica de centralização por cidade
+- - Pin único com tooltip ao passar o mouse e evento de clique
+- - Modal de reviews com busca interna
+- Dia 3
+- - Formulário de novo review com validação
+- - Integração com API do Appwrite
+- - Polimento UI e Responsividade mobile básica
+- - Deploy (Surge.sh + Appwrite)
+
+---
