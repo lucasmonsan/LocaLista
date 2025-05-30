@@ -9,6 +9,10 @@
     "chanzhaoyu.svelte-5-snippets",
     "pivaszbs.svelte-autoimport",
     "svelte.svelte-vscode",
-    "castrogusttavo.symbols"
+    "castrogusttavo.symbols",
+    "naumovs.color-highlight",
+    "wix.vscode-import-cost",
+    "oderwat.indent-rainbow",
+    "styled-components.vscode-styled-components"
   ]
 }
