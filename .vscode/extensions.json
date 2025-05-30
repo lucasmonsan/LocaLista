@@ -1,0 +1,14 @@
+{
+  "recommendations": [
+    "formulahendry.auto-close-tag",
+    "formulahendry.auto-complete-tag",
+    "formulahendry.auto-rename-tag",
+    "ecmel.vscode-html-css",
+    "zignd.html-css-class-completion",
+    "esbenp.prettier-vscode",
+    "chanzhaoyu.svelte-5-snippets",
+    "pivaszbs.svelte-autoimport",
+    "svelte.svelte-vscode",
+    "castrogusttavo.symbols"
+  ]
+}
