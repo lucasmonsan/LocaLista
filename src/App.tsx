@@ -1,10 +1,12 @@
 import styled from 'styled-components';
 import AuthTest from './components/AuthTest';
+import MapTest from './components/MapTest';
 
 function App() {
   return (
     <Container>
       <AuthTest />
+      <MapTest />
     </Container>
   );
 }
