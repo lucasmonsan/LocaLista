@@ -19,6 +19,12 @@ interface City {
   lon: number;
 }
 
+interface Neighborhood {
+  $id: string;
+  name: string;
+  cityId: string;
+}
+
 interface Review {
   $id: string;
   cityId: string;
@@ -30,11 +36,17 @@ interface Review {
   userId: string;
 }
 
+interface ReviewWithNeighborhood extends Review {
+  neighborhoodName: string;
+}
+
 const MapTest = () => {
   const [city, setCity] = useState<City | null>(null);
-  const [reviews, setReviews] = useState<Review[]>([]);
-  const [filteredReviews, setFilteredReviews] = useState<Review[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [neighborhoods, setNeighborhoods] = useState<Map<string, string>>(new Map());
+  const [reviews, setReviews] = useState<ReviewWithNeighborhood[]>([]);
+  const [filteredReviews, setFilteredReviews] = useState<ReviewWithNeighborhood[]>([]);
+  const [streetSearchTerm, setStreetSearchTerm] = useState('');
+  const [neighborhoodSearchTerm, setNeighborhoodSearchTerm] = useState('');
   const [modalOpen, setModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,7 +57,7 @@ const MapTest = () => {
         const response = await databases.getDocument(
           DATABASE_ID,
           COLLECTIONS.CITIES,
-          '6839f3bb00129f1158eb' // Substitua por $id real de Divinópolis
+          '6839f3bb00129f1158eb'
         );
         setCity({
           $id: response.$id,
@@ -60,9 +72,31 @@ const MapTest = () => {
     fetchCity();
   }, []);
 
-  // Buscar reviews de Divinópolis
+  // Buscar bairros de Divinópolis
   useEffect(() => {
     if (!city) return;
+    const fetchNeighborhoods = async () => {
+      try {
+        const response = await databases.listDocuments(
+          DATABASE_ID,
+          COLLECTIONS.NEIGHBORHOODS,
+          [Query.equal('cityId', city.$id)]
+        );
+        const neighborhoodMap = new Map<string, string>();
+        response.documents.forEach((doc: any) => {
+          neighborhoodMap.set(doc.$id, doc.name);
+        });
+        setNeighborhoods(neighborhoodMap);
+      } catch (err: any) {
+        setError('Erro ao buscar bairros: ' + err.message);
+      }
+    };
+    fetchNeighborhoods();
+  }, [city]);
+
+  // Buscar reviews de Divinópolis
+  useEffect(() => {
+    if (!city || neighborhoods.size === 0) return;
     const fetchReviews = async () => {
       try {
         const response = await databases.listDocuments(
@@ -70,10 +104,11 @@ const MapTest = () => {
           COLLECTIONS.REVIEWS,
           [Query.equal('cityId', city.$id)]
         );
-        const mappedReviews: Review[] = response.documents.map((doc) => ({
+        const mappedReviews: ReviewWithNeighborhood[] = response.documents.map((doc) => ({
           $id: doc.$id,
           cityId: doc.cityId,
           neighborhoodId: doc.neighborhoodId,
+          neighborhoodName: neighborhoods.get(doc.neighborhoodId) || 'Desconhecido',
           street: doc.street,
           number: doc.number,
           rating: doc.rating,
@@ -87,41 +122,55 @@ const MapTest = () => {
       }
     };
     fetchReviews();
-  }, [city]);
+  }, [city, neighborhoods]);
 
-  // Filtrar reviews com base no termo de busca
+  // Filtrar reviews com base nos termos de busca
   useEffect(() => {
-    if (!searchTerm) {
+    if (!streetSearchTerm && !neighborhoodSearchTerm) {
       setFilteredReviews(reviews);
       return;
     }
+
     const fetchFilteredReviews = async () => {
       try {
+        let queries = [Query.equal('cityId', city!.$id)];
+        if (streetSearchTerm) {
+          queries.push(Query.search('street', streetSearchTerm));
+        }
+
         const response = await databases.listDocuments(
           DATABASE_ID,
           COLLECTIONS.REVIEWS,
-          [
-            Query.equal('cityId', city!.$id),
-            Query.search('street', searchTerm),
-          ]
+          queries
         );
-        const mappedReviews: Review[] = response.documents.map((doc) => ({
+
+        const mappedReviews: ReviewWithNeighborhood[] = response.documents.map((doc) => ({
           $id: doc.$id,
           cityId: doc.cityId,
           neighborhoodId: doc.neighborhoodId,
+          neighborhoodName: neighborhoods.get(doc.neighborhoodId) || 'Desconhecido',
           street: doc.street,
           number: doc.number,
           rating: doc.rating,
           commentary: doc.commentary,
           userId: doc.userId,
         }));
-        setFilteredReviews(mappedReviews);
+
+        // Filtro adicional no frontend para neighborhoodName
+        const filtered = mappedReviews.filter((review) =>
+          neighborhoodSearchTerm
+            ? review.neighborhoodName.toLowerCase().includes(neighborhoodSearchTerm.toLowerCase())
+            : true
+        );
+
+        setFilteredReviews(filtered);
       } catch (err: any) {
         setError('Erro ao filtrar reviews: ' + err.message);
       }
     };
+
     if (city) fetchFilteredReviews();
-  }, [searchTerm, city, reviews]);
+  }, [streetSearchTerm, neighborhoodSearchTerm, city, reviews, neighborhoods]);
 
   const handlePinClick = () => {
     setModalOpen(true);
@@ -129,7 +178,8 @@ const MapTest = () => {
 
   const handleCloseModal = () => {
     setModalOpen(false);
-    setSearchTerm('');
+    setStreetSearchTerm('');
+    setNeighborhoodSearchTerm('');
   };
 
   if (error) {
@@ -166,14 +216,21 @@ const MapTest = () => {
             </ModalHeader>
             <SearchInput
               type="text"
-              placeholder="Filtrar por bairro ou rua"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Filtrar por rua"
+              value={streetSearchTerm}
+              onChange={(e) => setStreetSearchTerm(e.target.value)}
+            />
+            <SearchInput
+              type="text"
+              placeholder="Filtrar por bairro"
+              value={neighborhoodSearchTerm}
+              onChange={(e) => setNeighborhoodSearchTerm(e.target.value)}
             />
             <ReviewList>
               {filteredReviews.length > 0 ? (
                 filteredReviews.map((review) => (
                   <ReviewItem key={review.$id}>
+                    <p><strong>Bairro:</strong> {review.neighborhoodName}</p>
                     <p><strong>Rua:</strong> {review.street}, {review.number}</p>
                     <p><strong>Rating:</strong> {review.rating}/10</p>
                     <p><strong>Comentário:</strong> {review.commentary}</p>
