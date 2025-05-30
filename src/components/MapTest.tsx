@@ -45,7 +45,7 @@ const MapTest = () => {
         const response = await databases.getDocument(
           DATABASE_ID,
           COLLECTIONS.CITIES,
-          'DIVINOPOLIS_ID' // Substitua por $id real de Divinópolis
+          '6839f3bb00129f1158eb' // Substitua por $id real de Divinópolis
         );
         setCity({
           $id: response.$id,
@@ -101,11 +101,8 @@ const MapTest = () => {
           DATABASE_ID,
           COLLECTIONS.REVIEWS,
           [
-            Query.equal('cityId', city?.$id),
-            Query.or([
-              Query.search('street', searchTerm),
-              Query.search('neighborhoodId', searchTerm),
-            ]),
+            Query.equal('cityId', city!.$id),
+            Query.search('street', searchTerm),
           ]
         );
         const mappedReviews: Review[] = response.documents.map((doc) => ({
