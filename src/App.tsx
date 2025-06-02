@@ -1,21 +1,12 @@
-import styled from 'styled-components';
-import AuthTest from './components/AuthTest';
-import MapTest from './components/MapTest';
+import { Map } from './components/map/Map'
+import './styles/normalize.css'
 
 function App() {
   return (
-    <Container>
-      <AuthTest />
-      <MapTest />
-    </Container>
-  );
+    <>
+      <Map />
+    </>
+  )
 }
 
-export default App;
-
-const Container = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-  border: solid 1px red;
-`;
+export default App

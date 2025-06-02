@@ -1,11 +1,18 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import App from './App.tsx';
-import { GlobalStyles } from './styles/GlobalStyles';
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
+import App from './App.tsx'
+import { LanguageProvider } from './contexts/LanguageContext.tsx'
+import { SearchProvider } from './contexts/SearchContext.tsx'
+import { ThemeProvider } from './contexts/ThemeContext.tsx'
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <GlobalStyles />
-    <App />
-  </React.StrictMode>,
-);
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <ThemeProvider>
+      <LanguageProvider>
+        <SearchProvider>
+          <App />
+        </SearchProvider>
+      </LanguageProvider>
+    </ThemeProvider>
+  </StrictMode>,
+)
