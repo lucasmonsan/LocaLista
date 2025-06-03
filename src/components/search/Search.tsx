@@ -1,12 +1,15 @@
-import './index.css';
-import { SearchForm } from './SearchForm';
-import { SearchResult } from './SearchResult';
+import "./search.css"
+import { SearchIcon } from "../../assets/SearchIcon"
 
 export const Search = () => {
   return (
-    <div id="SearchContainer">
-      <SearchResult />
-      <SearchForm />
-    </div>
-  );
-};
+    <footer id="Footer">
+      <form id="FormSearch" action="">
+        <input id="InputSearch" type="text" />
+        <button id="ButtonSearch">
+          <SearchIcon />
+        </button>
+      </form>
+    </footer>
+  )
+}

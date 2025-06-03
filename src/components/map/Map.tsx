@@ -1,41 +1,53 @@
-import './index.css';
-import 'leaflet/dist/leaflet.css';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
-import { Header } from '../header/Header';
-import { Search } from "../search/Search";
-import { useSearch } from '../../contexts/SearchContext';
-import { useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import { useTheme } from '../../contexts/ThemeContext'; // Ajuste o caminho se necessário
 
-// Componente controlador separado (obrigatório para usar useMap)
-const MapController = () => {
-  const map = useMap();
-  const { selectedCoords } = useSearch();
+import iconRetinaUrl from 'leaflet/dist/images/marker-icon-2x.png';
+import iconUrl from 'leaflet/dist/images/marker-icon.png';
+import shadowUrl from 'leaflet/dist/images/marker-shadow.png';
+import { Search } from '../search/Search';
 
-  useEffect(() => {
-    if (selectedCoords) {
-      map.flyTo([selectedCoords.lat, selectedCoords.lon], 15);
-    }
-  }, [selectedCoords]);
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: iconRetinaUrl,
+  iconUrl: iconUrl,
+  shadowUrl: shadowUrl,
+});
 
-  return null;
+const tileLayersData = {
+  light: {
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  },
+  dark: {
+    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", // CartoDB Dark Matter
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors © <a href="https://carto.com/attributions">CARTO</a>'
+  }
 };
 
 export const Map = () => {
+  const { theme } = useTheme();
+  const position: L.LatLngExpression = [-23.55052, -46.633308];
+  const currentTileLayer = tileLayersData[theme];
+
   return (
-    <div id="MapContainer">
-      <Header />
+    <MapContainer
+      key={theme} // IMPORTANTE: Força a recriação do TileLayer ao mudar o tema
+      center={position}
+      zoom={13}
+      style={{ display: "flex", justifyContent: "center", height: '100%', width: '100%' }} // Para preencher o contêiner pai
+    >
+      <TileLayer
+        url={currentTileLayer.url}
+        attribution={currentTileLayer.attribution}
+      />
+      {/* 
+      <Marker position={position}>
+        <Popup>Popup</Popup>
+      </Marker>
+      */}
+
       <Search />
-      <MapContainer
-        center={[-15.7942, -47.8822]}
-        zoom={13}
-        style={{ height: '100vh', width: '100%' }}
-      >
-        <TileLayer
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        />
-        <MapController />
-      </MapContainer>
-    </div>
+    </MapContainer>
   );
 };

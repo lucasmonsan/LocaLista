@@ -1,0 +1,63 @@
+{
+  "git.openRepositoryInParentFolders": "always",
+  "window.commandCenter": false,
+  "workbench.layoutControl.enabled": false,
+  "workbench.settings.applyToAllProfiles": ["sync.forceUpload", "sync.autoUpload", "editor.fontFamily", "editor.tabSize", "editor.fontSize", "editor.defaultFormatter", "editor.formatOnSave"],
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.formatOnSave": true,
+
+  "notebook.defaultFormatter": "esbenp.prettier-vscode",
+  "notebook.formatOnSave.enabled": true,
+  "explorer.confirmDelete": false,
+  "explorer.confirmDragAndDrop": false,
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "workbench.activityBar.location": "top",
+  "editor.fontFamily": "'JetBrains Mono', 'monospace', monospace",
+  "editor.tabSize": 2,
+  "editor.fontSize": 12,
+  "prettier.printWidth": 240,
+  "editor.linkedEditing": true,
+  "security.workspace.trust.untrustedFiles": "open",
+  "javascript.updateImportsOnFileMove.enabled": "always",
+
+  "editor.lineHeight": 1.8,
+  "editor.minimap.enabled": false,
+  "workbench.startupEditor": "newUntitledFile",
+  "editor.fontLigatures": true,
+  "workbench.editor.labelFormat": "short",
+  "explorer.compactFolders": false,
+  "editor.semanticHighlighting.enabled": false,
+  "breadcrumbs.enabled": false,
+  "explorer.fileNesting.enabled": true,
+  "terminal.integrated.defaultProfile.linux": "zsh",
+  "explorer.fileNesting.patterns": {
+    ".env": ".npm*, tsconfig*, vite*, .git*, svelte*, README*, LICENSE*, *.css, .prettier*, yarn*, package*, bun*, eslint*, index*",
+    "package.json": "bun*, .npm*, tsconfig*, vite*, .git*, svelte*, README*, LICENSE*, *.css, eslint*, .prettier*, yarn*, package*, astro*"
+  },
+  "window.confirmSaveUntitledWorkspace": false,
+  "[typescript]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "files.associations": {
+    "*.tsx": "typescriptreact"
+  },
+  "[svelte]": {
+    "editor.defaultFormatter": "svelte.svelte-vscode"
+  },
+  "svelte.enable-ts-plugin": true,
+  "diffEditor.ignoreTrimWhitespace": true,
+  "editor.inlineSuggest.suppressSuggestions": true,
+  "[oraclesql]": {
+    "editor.suggest.showSnippets": true,
+    "editor.quickSuggestions": {
+      "comments": "on",
+      "strings": "on",
+      "other": "on"
+    }
+  },
+  "symbols.hidesExplorerArrows": false,
+  "workbench.iconTheme": "vs-seti-folder"
+}

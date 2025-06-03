@@ -1,12 +1,12 @@
-import { Map } from './components/map/Map'
-import './styles/normalize.css'
+import { Header } from "./components/header/Header"
+import { Map } from "./components/map/Map"
 
-function App() {
+export const App = () => {
+
   return (
     <>
+      <Header />
       <Map />
     </>
   )
 }
-
-export default App
