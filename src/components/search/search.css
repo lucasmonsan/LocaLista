@@ -1,45 +1,89 @@
+/* No seu search.css */
+
+/* Estilos existentes do #Footer (ajustados para centralização se não for tela cheia) */
 #Footer {
-  z-index: 1001;
-  position: fixed;
-  bottom: calc(var(--base) * 1);
-  width: 100%;
-  max-width: calc(var(--base) * 20);
-  height: 100%;
-  max-height: calc(var(--base) * 3);
-  padding: calc(var(--base) * 0.5);
-  background: var(--bg);
-  border: none;
-  border-radius: var(--radius1);
-  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+	z-index: 1001;
+	position: fixed;
+	bottom: calc(var(--base) * 1); /* */
+	display: flex;
+	flex-direction: column; /* Isso fará com que ResultsContainer fique acima de FormSearch naturalmente */ /* */
+	width: 100%;
+	max-width: calc(var(--base) * 20); /* */
+	height: auto; /* Alterado de height: 100% para permitir que o conteúdo defina a altura */ /* */
+	padding: calc(var(--base) * 0.5); /* */
+	background: var(--bg); /* */
+	border: none; /* */
+	border-radius: var(--radius1); /* */
+	box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px; /* */
+
+	/* Adicionado para centralizar o footer se ele não ocupar a tela toda */
+	left: 50%;
+	transform: translateX(-50%);
 }
 
+#ResultsContainer {
+	display: flex;
+	align-items: center;
+	width: 100%; /* Ocupa a largura do #Footer */
+	background: var(--card); /* Usar uma cor de card, ou var(--bg) se preferir */
+	border-radius: var(--radius2); /* Um raio de borda suave */
+	margin-bottom: 0;
+	box-shadow: rgba(0, 0, 0, 0.1) 0px -2px 5px 0px; /* Sombra sutil para dar elevação */
+	max-height: 0;
+	opacity: 0;
+	overflow: hidden; /* Essencial para a animação de max-height */
+	padding-top: 0;
+	padding-bottom: 0;
+	transition: max-height var(--fast), opacity var(--fast), padding var(--fast), margin-bottom var(--fast);
+}
+
+#ResultsContainer.visible {
+	max-height: 50vh; /* Altura máxima que o container pode ter. Ajuste conforme necessário. 50vh = 50% da altura da viewport. */
+	padding: calc(var(--base) * 0.5); /* Adiciona padding interno quando visível */
+	margin-bottom: calc(var(--base) * 0.5); /* Espaço entre os resultados e a barra de pesquisa */
+	opacity: 1;
+	/* margin-bottom já está definido e será mantido */
+}
+
+#ResultsContainer > * {
+	position: absolute;
+	width: 100%;
+}
+
+#ResultsContainer strong,
+#ResultsContainer ul {
+	width: 100%; /* Ocupa a largura do #Footer */
+	text-align: center;
+	animation: fadeIn var(--fast) forwards;
+}
+
+/* Ajuste a altura do FormSearch para ser fixa, já que #Footer agora é height: auto */
 #FormSearch {
-  display: flex;
-  width: 100%;
-  height: 100%;
-  border: solid 2px var(--gray);
-  border-radius: calc(var(--base) * 0.25);
-  background: var(--card);
-  overflow: hidden;
+	display: flex; /* */
+	width: 100%; /* */
+	height: calc(var(--base) * 2.5); /* Ex: altura para acomodar input e botão */
+	border: solid 2px var(--gray); /* */
+	border-radius: calc(var(--base) * 0.25); /* */
+	background: var(--card); /* */
+	overflow: hidden; /* */
 }
 
 #InputSearch {
-  flex: 1;
-  width: 100%;
-  height: 100%;
-  padding: calc(var(--base) * 0.25) calc(var(--base) * 0.25) calc(var(--base) * 0.25) calc(var(--base) * 0.5);
-  font-weight: 500;
-  color: var(--text);
-  border: none;
-  background: transparent;
-  border-radius: var(--radius2);
-  background: var(--card);
+	flex: 1; /* */
+	width: 100%; /* */
+	height: 100%; /* */
+	padding: calc(var(--base) * 0.25) calc(var(--base) * 0.25) calc(var(--base) * 0.25) calc(var(--base) * 0.5); /* */
+	font-weight: 500; /* */
+	color: var(--text); /* */
+	border: none; /* */
+	background: transparent; /* */
+	border-radius: var(--radius2); /* */
 }
 
 #ButtonSearch {
-  width: calc(var(--base) * 2);
-  height: 100%;
-  padding: calc(var(--base) * 0.25) calc(var(--base) * 0.25) calc(var(--base) * 0.25) 0;
-  border: none;
-  background: transparent;
+	width: calc(var(--base) * 2); /* */
+	height: 100%; /* */
+	padding: calc(var(--base) * 0.25) calc(var(--base) * 0.25) calc(var(--base) * 0.25) 0; /* */
+	border: none; /* */
+	background: transparent; /* */
 }

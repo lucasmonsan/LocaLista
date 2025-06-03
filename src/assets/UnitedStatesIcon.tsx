@@ -1,6 +1,6 @@
 export const UnitedStatesIcon = () => {
   return (
-    <svg className="opacity_scale_rotation" height="2.5rem" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" >
+    <svg className="scale_rotation icon_large" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" >
       <circle style={{ fill: "#F0F0F0" }} cx="256" cy="256" r="256" />
       <g>
         <path style={{ fill: "#D80027" }} d="M244.87,256H512c0-23.106-3.08-45.49-8.819-66.783H244.87V256z" />

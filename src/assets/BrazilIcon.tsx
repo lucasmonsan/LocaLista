@@ -1,6 +1,6 @@
 export const BrazilIcon = () => {
   return (
-    <svg className="opacity_scale_rotation" height="2.5rem" version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" >
+    <svg className="scale_rotation icon_large" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" >
       <circle style={{ fill: "#6DA544" }} cx="256" cy="256" r="256" />
       <polygon style={{ fill: "#FFDA44" }} points="256,100.174 467.478,256 256,411.826 44.522,256 " />
       <circle style={{ fill: "#F0F0F0" }} cx="256" cy="256" r="89.043" />
