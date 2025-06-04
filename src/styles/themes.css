@@ -1,0 +1,22 @@
+:root,
+:root[data-theme='light'] {
+	--bg: #eeeeee;
+	--text: #1b1b1b;
+	--gray: #5c5c5c;
+	--accent: #fe6937;
+	--card: #ffffff;
+}
+
+:root[data-theme='dark'] {
+	--bg: #1b1b1b;
+	--text: #eeeeee;
+	--gray: #5c5c5c;
+	--accent: #fe6937;
+	--card: #292929;
+}
+
+body {
+	background-color: var(--bg);
+	color: var(--text);
+	transition: background-color var(--fast), color var(--fast);
+}

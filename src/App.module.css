@@ -1,0 +1,11 @@
+.appContainer {
+	width: 100vw;
+	height: 100vh;
+	position: relative; /* Para posicionar Header e SearchBar */
+	overflow: hidden;
+}
+
+.mapWrapper {
+	width: 100%;
+	height: 100%;
+}

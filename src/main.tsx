@@ -1,20 +1,15 @@
-import './main.css'
-import 'leaflet/dist/leaflet.css';
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { App } from './App.tsx'
-import { ThemeProvider } from './contexts/ThemeContext.tsx'
-import { LanguageProvider } from './contexts/LanguageContext.tsx';
-import { SearchProvider } from './contexts/SearchContext.tsx';
+import './styles/global.css'; // Global styles
+import './styles/themes.css';   // Theme variables
+import './i18n.ts'; // Initialize i18next
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.tsx';
+import { ThemeProvider } from './contexts/ThemeContext.tsx';
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <LanguageProvider>
-      <ThemeProvider>
-        <SearchProvider>
-          <App />
-        </SearchProvider>
-      </ThemeProvider>
-    </LanguageProvider>
-  </StrictMode>,
-)
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <ThemeProvider>
+      <App />
+    </ThemeProvider>
+  </React.StrictMode>,
+);

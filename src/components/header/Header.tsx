@@ -1,47 +1,25 @@
-import { BrazilIcon } from "../../assets/BrazilIcon"; // Ajuste os caminhos se necessário
-import { DarkIcon } from "../../assets/DarkIcon";
-import { LightIcon } from "../../assets/LightIcon";
-import { UnitedStatesIcon } from "../../assets/UnitedStatesIcon";
-import { useLanguage } from "../../contexts/LanguageContext";
-import { useTheme } from "../../contexts/ThemeContext";
-import "./header.css";
+import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '../../contexts/ThemeContext';
+import styles from './Header.module.css';
 
-export const Header = () => {
-  const { theme, toggleTheme } = useTheme();
-  // Removido isSearchFocused da desestruturação de useLanguage
-  const { language, setLanguage } = useLanguage();
+export const Header: React.FC = () => {
+  const { t, i18n } = useTranslation();
+  const { toggleTheme } = useTheme();
 
-  const handleLanguageToggle = () => {
-    const newLanguage = language === 'pt-BR' ? 'en-US' : 'pt-BR';
-    setLanguage(newLanguage);
+  const changeLanguage = () => {
+    const newLang = i18n.language === 'en' ? 'pt' : 'en';
+    i18n.changeLanguage(newLang);
   };
 
-  const languageButtonAriaLabel = language === 'pt-BR'
-    ? 'Switch to English (US)'
-    : 'Mudar para Português (Brasil)';
-
-  const themeButtonAriaLabel = theme === "light"
-    ? 'Mudar para modo escuro'
-    : 'Mudar para modo claro';
-
   return (
-    <header id="Header">
-      <button
-        className='buttonHeader opacity_scale_rotation'
-        onClick={toggleTheme}
-        aria-label={themeButtonAriaLabel}
-      >
-        {theme === "light" ? <LightIcon /> : <DarkIcon />}
+    <header className={styles.header}>
+      <button onClick={toggleTheme} className={styles.button}>
+        {t('toggle_theme')}
       </button>
-
-      <button
-        className='buttonHeader opacity_scale_rotation'
-        onClick={handleLanguageToggle}
-        // Removida a propriedade 'disabled'
-        aria-label={languageButtonAriaLabel}
-      >
-        {language === "pt-BR" ? <BrazilIcon /> : <UnitedStatesIcon />}
+      <button onClick={changeLanguage} className={styles.button}>
+        {t('toggle_language')} ({i18n.language.toUpperCase()})
       </button>
     </header>
   );
-}
+};
