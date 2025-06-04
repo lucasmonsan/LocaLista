@@ -1,6 +1,7 @@
-import './styles/global.css'; // Global styles
-import './styles/themes.css';   // Theme variables
-import './i18n.ts'; // Initialize i18next
+import './styles/global.css';
+import './styles/themes.css';
+import './styles/animations.css'
+import './i18n.ts';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';

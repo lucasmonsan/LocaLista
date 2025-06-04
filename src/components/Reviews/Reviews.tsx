@@ -1,5 +1,5 @@
 import React from 'react';
-import styles from './Carousel.module.css';
+import styles from './Reviews.module.css';
 
 interface Review {
   id: string | number;
@@ -7,18 +7,21 @@ interface Review {
   // Ex: content: string;
 }
 
-interface CarouselProps {
+interface ReviewsProps {
   reviews: Review[];
 }
 
-export const Carousel: React.FC<CarouselProps> = ({ reviews }) => {
+export const Reviews: React.FC<ReviewsProps> = ({ reviews }) => {
   if (!reviews || reviews.length === 0) {
     return null;
   }
 
   return (
-    <div className={styles.carouselContainer} aria-label="Review Carousel">
-      <ul className={styles.carouselList}>
+    <div className={styles.reviewsContainer} aria-label="Review Reviews">
+      <button>
+
+      </button>
+      <ul className={styles.reviewsList}>
         {reviews.map((review, index) => (
           <li key={review.id || index} className={styles.reviewCard}>
             {/* Conteúdo do card de review */}

@@ -6,7 +6,7 @@ import { Map } from './components/Map';
 import { Search } from './components/Search';
 import { searchLocation, type ProcessedNominatimResult } from './services/nominatimService';
 import { Results } from './components/Results';
-import { Carousel } from './components/Carroussel';
+import { Reviews } from './components/Reviews';
 
 interface AppReview {
   id: string | number;
@@ -57,7 +57,7 @@ function App() {
       )}
 
       {!searchResults && reviews.length > 0 && (
-        <Carousel reviews={reviews} />
+        <Reviews reviews={reviews} />
       )}
 
       <div className={styles.mapWrapper}>
