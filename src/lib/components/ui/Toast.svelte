@@ -1,49 +1,78 @@
 <script lang="ts">
-	import { toastMessage } from '$lib/stores'
+	import { toastStore } from '$lib/stores'
 	import { fly } from 'svelte/transition'
-	import { onMount } from 'svelte'
-
-	// Fecha automaticamente após 4 segundos
-	let timeout: any
-
-	// Reage a mudanças na store
-	$: if ($toastMessage) {
-		if (timeout) clearTimeout(timeout)
-		timeout = setTimeout(() => {
-			toastMessage.set(null)
-		}, 4000)
-	}
 </script>
 
-{#if $toastMessage}
-	<div class="toast" transition:fly={{ y: -50, duration: 300 }}>
-		<p>{$toastMessage}</p>
-	</div>
-{/if}
+<div class="toast-container">
+	{#if $toastStore.persistent}
+		<div class="toast persistent" transition:fly={{ y: -20, duration: 300 }}>
+			<p>{$toastStore.persistent.message}</p>
+		</div>
+	{/if}
+
+	{#if $toastStore.temporary}
+		<div
+			class="toast temporary"
+			class:success={$toastStore.temporary.type === 'success'}
+			class:error={$toastStore.temporary.type === 'error'}
+			transition:fly={{ y: 20, duration: 300 }}
+		>
+			<p>{$toastStore.temporary.message}</p>
+		</div>
+	{/if}
+</div>
 
 <style>
-	.toast {
+	.toast-container {
 		position: fixed;
-		top: var(--lg); /* Margem do topo */
-		left: 50%;
-		transform: translateX(-50%); /* Centraliza */
-		z-index: var(--z-modal); /* Acima de tudo */
+		top: var(--lg);
+		left: 0;
+		width: 100%;
+		pointer-events: none; /* Deixa clicar no mapa através do container */
+		z-index: var(--z-modal); /* Deve ficar acima de tudo */
 
-		background-color: var(--text-color); /* Fundo escuro */
-		color: var(--bg-color); /* Texto claro */
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: var(--sm);
+	}
 
+	.toast {
 		padding: var(--sm) var(--md);
-		border-radius: 50px; /* Pílula */
+		border-radius: 50px;
 		box-shadow: var(--shadow-black);
-
 		max-width: 90%;
 		text-align: center;
-		pointer-events: none; /* Deixa clicar no mapa através dele */
+		pointer-events: auto; /* O toast em si bloqueia clique (opcional) */
+		font-size: 0.95rem;
+		font-weight: 500;
+	}
+
+	/* Estilo Persistente (Instrução - Neutro) */
+	.persistent {
+		background-color: var(--bg-color);
+		color: var(--text-color);
+		border: 1px solid var(--subbg-color);
+	}
+
+	/* Estilo Temporário (Alerta) */
+	.temporary {
+		background-color: var(--text-color); /* Padrão escuro */
+		color: var(--bg-color);
+		z-index: 10;
+	}
+
+	.temporary.success {
+		background-color: #10b981; /* Verde */
+		color: white;
+	}
+
+	.temporary.error {
+		background-color: #ef4444; /* Vermelho */
+		color: white;
 	}
 
 	p {
 		margin: 0;
-		font-size: 0.9rem;
-		font-weight: 500;
 	}
 </style>

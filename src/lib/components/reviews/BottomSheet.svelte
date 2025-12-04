@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { selectedLocation, lastSearchedLocation } from '$lib/stores'
+	import { selectedLocation, lastSearchedLocation, user, isProfileOpen } from '$lib/stores'
 	import { fly, fade } from 'svelte/transition'
 	import XIcon from '$lib/icons/XIcon.svelte'
 	import LoadingIcon from '$lib/icons/LoadingIcon.svelte'
@@ -64,16 +64,29 @@
 		}
 	}
 
-	function resolveConflict(chosenLocation: any) {
-		// 1. Avisa o bloco reativo para ignorar a próxima atualização
-		ignoreNextUpdate = true
-
-		// 2. Clona o objeto para forçar atualização da store (mesmo se for igual)
-		// Isso garante que os componentes filhos recebam os dados novos
-		selectedLocation.set({ ...chosenLocation })
-
-		// 3. Força o modo de edição direto
+	// Função auxiliar para verificar login antes de editar
+	function handleStartReview() {
+		if (!$user) {
+			alert('Você precisa entrar na sua conta para avaliar.')
+			isProfileOpen.set(true) // Abre a tela de login
+			return
+		}
+		// Se tiver logado, libera o formulário
 		mode = 'edit'
+	}
+
+	function resolveConflict(chosenLocation: any) {
+		selectedLocation.set(chosenLocation)
+
+		// Verifica login antes de ir pro form
+		if (!$user) {
+			alert('Endereço definido. Faça login para continuar a avaliação.')
+			isProfileOpen.set(true)
+			// Mantém no modo view para o usuário não perder a localização
+			mode = 'view'
+		} else {
+			mode = 'edit'
+		}
 	}
 
 	function searchAgain() {
@@ -137,7 +150,7 @@
 						</div>
 
 						{#if mode === 'view'}
-							<LocationSummary onViewReviews={() => (mode = 'list')} onCreateReview={() => (mode = 'edit')} />
+							<LocationSummary onViewReviews={() => (mode = 'list')} onCreateReview={handleStartReview} />
 						{:else if mode === 'edit'}
 							<ReviewForm onCancel={() => (mode = 'view')} onSuccess={() => (mode = 'view')} />
 						{/if}

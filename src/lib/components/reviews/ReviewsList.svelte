@@ -3,6 +3,7 @@
 	import { supabase } from '$lib/supabaseClient'
 	import StarRating from '$lib/components/ui/StarRating.svelte'
 	import LoadingIcon from '$lib/icons/LoadingIcon.svelte' // Certifique-se que está importado
+	import { user } from '$lib/stores'
 
 	export let localId: number
 	export let onBack: () => void
@@ -47,6 +48,17 @@
 		})
 	}
 
+	function getAuthorName(reviewUserId: string | null) {
+		// Se não tem ID, é Anônimo antigo
+		if (!reviewUserId) return 'Anônimo'
+
+		// Se o ID bate com o usuário logado
+		if ($user && reviewUserId === $user.id) return 'Você'
+
+		// Se tem ID mas não sou eu (Opcional: Pode ser "Usuário" ou manter "Anônimo")
+		return 'Usuário LocaLista'
+	}
+
 	onMount(() => {
 		fetchReviews()
 	})
@@ -69,7 +81,7 @@
 			<div class="review-card">
 				<div class="review-header">
 					<div class="author-info">
-						<strong>Anônimo</strong>
+						<strong>{getAuthorName(review.user_id)}</strong>
 						<span class="date">{formatDate(review.created_at)}</span>
 					</div>
 					<div class="mini-stars">

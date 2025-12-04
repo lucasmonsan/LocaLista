@@ -5,6 +5,7 @@
 	import Blur from '$lib/components/ui/Blur.svelte'
 	import { isSearching } from '$lib/stores'
 	import Toast from '$lib/components/ui/Toast.svelte'
+	import ProfileSheet from '$lib/components/reviews/ProfileSheet.svelte'
 </script>
 
 <main>
@@ -19,6 +20,8 @@
 	<Footer />
 
 	<BottomSheet />
+
+	<ProfileSheet />
 </main>
 
 <style>

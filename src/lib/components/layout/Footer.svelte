@@ -7,7 +7,9 @@
 	import LoadingIcon from '$lib/icons/LoadingIcon.svelte'
 
 	import SearchResults from '$lib/components/layout/SearchResults.svelte'
-	import { mapView, currentMapCenter, selectedLocation, highlightGeometry, toastMessage, lastSearchedLocation } from '$lib/stores'
+
+	// Adicionado userPosition e user
+	import { mapView, currentMapCenter, selectedLocation, highlightGeometry, lastSearchedLocation, isProfileOpen, userPosition, user, setPersistentToast } from '$lib/stores'
 
 	let searchInput = ''
 	let inputRef: HTMLInputElement
@@ -15,10 +17,66 @@
 	let results: any[] = []
 	let searchError = ''
 	let isFocused = false
+	let isGpsLoading = false
+
+	// Helper para Avatar
+	function getUserAvatar() {
+		if (!$user) return null
+		const avatar = $user.user_metadata?.avatar_url
+		if (avatar) return { type: 'image', src: avatar }
+		const name = $user.user_metadata?.full_name || $user.email
+		const initial = name ? name[0].toUpperCase() : '?'
+		return { type: 'text', content: initial }
+	}
+
+	// --- NOVA LÓGICA DE GPS ---
+	// Verifica se o mapa está centralizado no usuário
+	let isGpsActive = false
+
+	$: if ($userPosition && $currentMapCenter) {
+		const latDiff = Math.abs($userPosition.lat - $currentMapCenter.lat)
+		const lonDiff = Math.abs($userPosition.lon - $currentMapCenter.lon)
+		// Se a diferença for muito pequena, consideramos centralizado
+		isGpsActive = latDiff < 0.0005 && lonDiff < 0.0005
+	}
+
+	const handleGPS = () => {
+		isGpsLoading = true
+
+		// Se já temos a posição na store (watchPosition rodando), é instantâneo
+		if ($userPosition) {
+			mapView.set({
+				lat: $userPosition.lat,
+				lon: $userPosition.lon,
+				zoom: 17,
+				trigger: Date.now(),
+			})
+			// Atualiza centro para ativar o azul imediatamente
+			currentMapCenter.set({ lat: $userPosition.lat, lon: $userPosition.lon })
+			isGpsLoading = false
+		} else {
+			// Fallback se a store estiver vazia (primeiro uso ou erro)
+			navigator.geolocation.getCurrentPosition(
+				pos => {
+					const { latitude, longitude } = pos.coords
+					// Atualiza store
+					userPosition.set({ lat: latitude, lon: longitude })
+					mapView.set({ lat: latitude, lon: longitude, zoom: 17, trigger: Date.now() })
+					currentMapCenter.set({ lat: latitude, lon: longitude })
+					isGpsLoading = false
+				},
+				err => {
+					console.error(err)
+					alert('Não foi possível obter sua localização.')
+					isGpsLoading = false
+				},
+				{ enableHighAccuracy: true }
+			)
+		}
+	}
 
 	const handleSearch = async () => {
 		if (searchInput.length < 3 || isLoading) return
-
 		isLoading = true
 		results = []
 		searchError = ''
@@ -31,15 +89,11 @@
 				lon: center.lon.toFixed(6),
 				limit: '8',
 			})
-
 			const response = await fetch(`https://photon.komoot.io/api/?${params}`)
-			if (!response.ok) throw new Error('Erro API')
-
 			const data = await response.json()
 
 			if (data.features && data.features.length > 0) {
 				const seen = new Set()
-
 				results = data.features
 					.filter((f: any) => {
 						if (f.properties.countrycode !== 'BR') return false
@@ -49,13 +103,11 @@
 						return true
 					})
 					.slice(0, 5)
-
 				if (results.length === 0) searchError = 'Nenhum local relevante encontrado.'
 			} else {
 				searchError = 'Nenhum local encontrado.'
 			}
 		} catch (error) {
-			console.error(error)
 			searchError = 'Erro ao buscar.'
 		} finally {
 			isLoading = false
@@ -67,20 +119,16 @@
 		const nomeOficial = item.properties.name || item.properties.street
 		const cidade = item.properties.city || item.properties.town
 
-		// 1. UI Updates
 		searchInput = cidade ? `${nomeOficial}, ${cidade}` : nomeOficial
 		inputRef.blur()
 		results = []
 
-		// Move mapa
 		mapView.set({ lat, lon, zoom: 17, trigger: Date.now() })
 
-		// 2. Highlight da Rua (Nominatim)
+		// Highlight Logic ...
 		const osmType = item.properties.osm_type
 		const osmId = item.properties.osm_id
 		highlightGeometry.set(null)
-
-		// NOVO: Salva a intenção de busca
 		lastSearchedLocation.set(item)
 
 		if (osmType && osmId) {
@@ -92,13 +140,11 @@
 					highlightGeometry.set(data[0].geojson)
 				}
 			} catch (err) {
-				console.error('Erro ao buscar geometria:', err)
+				console.error('Erro highlight:', err)
 			}
 		}
 
-		// 3. Decisão UX: Pin ou Toast?
 		if (osmType === 'N') {
-			// Nó específico (Loja, Prédio): Seleciona
 			selectedLocation.set({
 				id: null,
 				nome: nomeOficial || 'Local selecionado',
@@ -108,9 +154,9 @@
 				lon: lon,
 			})
 		} else {
-			// Rua ou Bairro: Apenas avisa
 			selectedLocation.set(null)
-			toastMessage.set('📍 Local encontrado! Toque no ponto exato do imóvel para avaliar.')
+			// MUDANÇA: Usa Toast Persistente (Instrução)
+			setPersistentToast('📍 Local encontrado! Toque no ponto exato do imóvel para avaliar.')
 		}
 	}
 
@@ -119,6 +165,7 @@
 		results = []
 		searchError = ''
 		highlightGeometry.set(null)
+		setPersistentToast(null) // Limpa instrução se cancelar
 		inputRef.focus()
 	}
 </script>
@@ -138,15 +185,22 @@
 				</ul>
 			</div>
 		{:else if searchError}
-			<div class="expand-content error" transition:slide>
-				<small>{searchError}</small>
-			</div>
+			<div class="expand-content error" transition:slide><small>{searchError}</small></div>
 		{/if}
 	</div>
 
 	<div class="controls-row">
-		<button class="icon-btn" aria-label="Perfil">
-			<UserIcon />
+		<button class="icon-btn" aria-label="Perfil" on:click={() => ($isProfileOpen = true)}>
+			{#if $user}
+				{@const avatar = getUserAvatar()}
+				{#if avatar?.type === 'image'}
+					<img src={avatar.src} alt="Avatar" class="avatar-img" />
+				{:else}
+					<div class="avatar-text">{avatar?.content}</div>
+				{/if}
+			{:else}
+				<UserIcon />
+			{/if}
 		</button>
 
 		<div class="search-input-group">
@@ -170,8 +224,12 @@
 			</button>
 		</div>
 
-		<button class="icon-btn" aria-label="GPS">
-			<GpsIcon />
+		<button class="icon-btn gps-btn" class:active={isGpsActive} aria-label="GPS" on:click={handleGPS}>
+			{#if isGpsLoading}
+				<div class="loader-wrap"><LoadingIcon /></div>
+			{:else}
+				<GpsIcon />
+			{/if}
 		</button>
 	</div>
 </footer>
@@ -181,28 +239,21 @@
 		position: fixed;
 		bottom: var(--lg);
 		z-index: var(--z-search);
-
 		width: 100%;
 		max-width: calc(var(--xxxl) * 10);
 		padding: var(--padd-component);
-
-		/* Layout Vertical: Expansão em cima, Controles embaixo */
 		display: flex;
 		flex-direction: column;
-		gap: var(--xs); /* Espaço entre a lista e a barra */
-
+		gap: var(--xs);
 		transition: transform var(--normal);
-
 		@media (max-width: 640px) {
 			max-width: calc(100% - var(--xl));
 		}
 	}
-
 	footer.hidden {
 		transform: translateY(150%);
 	}
 
-	/* --- Linha Principal (Dock) --- */
 	.controls-row {
 		display: flex;
 		align-items: center;
@@ -210,41 +261,67 @@
 		height: var(--xxxxl);
 	}
 
-	/* Botões Laterais (Quadrados/Redondos) */
 	.icon-btn {
-		width: var(--xxxxl); /* Largura fixa */
-		height: 100%; /* Altura total da linha */
-		padding: var(--xs);
-
-		background-color: var(--bg-color);
+		width: var(--xxxxl);
+		height: 100%; /* Altura da linha do footer */
+		padding: 0; /* Padding interno */
 		border-radius: var(--radius-2);
+		background-color: var(--bg-color);
 		box-shadow: var(--shadow-black);
 		border: none;
 
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		transition: background var(--fast);
+
+		transition:
+			background var(--fast),
+			color var(--fast);
+
+		/* ADIÇÕES CRÍTICAS PARA O AVATAR: */
+		overflow: hidden; /* Corta a imagem se ela for maior */
+		flex-shrink: 0; /* Impede o botão de ser espremido */
+		position: relative;
 	}
 	.icon-btn:active {
 		transform: scale(0.95);
 	}
 
-	/* Grupo Central de Busca */
-	.search-input-group {
-		flex: 1; /* Ocupa todo o espaço restante */
-		height: 100%;
+	/* Estilos do GPS Ativo */
+	.gps-btn.active {
+		color: var(--primary-color);
+	}
 
+	/* Estilos do Avatar */
+	.avatar-img {
+		width: 100%;
+		height: 100%;
+		object-fit: cover; /* Garante que a imagem preencha sem distorcer */
+		display: block;
+	}
+	.avatar-text {
+		width: 100%;
+		height: 100%;
+		background-color: var(--primary-color);
+		color: white;
+		font-weight: bold;
+		font-size: 1.1rem;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.search-input-group {
+		flex: 1;
+		height: 100%;
 		background-color: var(--bg-color);
 		border-radius: var(--radius-2);
 		box-shadow: var(--shadow-black);
-
 		display: flex;
 		align-items: center;
 		padding-left: var(--sm);
-		overflow: hidden; /* Para o input não vazar */
+		overflow: hidden;
 	}
-
 	input {
 		flex: 1;
 		height: 100%;
@@ -252,13 +329,13 @@
 		background: transparent;
 		font-size: 1rem;
 		color: var(--text-color);
-		min-width: 0; /* Fix flexbox shrinking issues */
+		min-width: 0;
 	}
 
 	.action-btn {
-		width: var(--xxxxl); /* Quadrado na ponta direita */
+		width: var(--xxxxl);
 		height: 100%;
-		padding: var(--xs);
+		padding: 0;
 		border: none;
 		background: transparent;
 		display: flex;
@@ -266,13 +343,15 @@
 		justify-content: center;
 		color: var(--subtext-color);
 	}
-
-	/* --- Conteúdo Expansível (Resultados) --- */
-	.expand-wrapper {
-		width: 100%;
-		/* Como o footer é flex-column, isso fica em cima naturalmente */
+	/* Força tamanho do ícone */
+	.action-btn :global(svg) {
+		width: 24px;
+		height: 24px;
 	}
 
+	.expand-wrapper {
+		width: 100%;
+	}
 	.expand-content {
 		background: var(--bg-color);
 		border-radius: var(--radius-2);
@@ -293,7 +372,6 @@
 	.tips li {
 		margin-bottom: 4px;
 	}
-
 	.error {
 		padding: var(--sm);
 		color: #c62828;
@@ -301,9 +379,8 @@
 		background: #ffcdd2;
 	}
 
-	/* Ajuste de tamanho do loader */
 	.loader-wrap {
-		width: 100%;
-		height: 100%;
+		width: 24px;
+		height: 24px;
 	}
 </style>
