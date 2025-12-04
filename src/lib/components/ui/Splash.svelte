@@ -2,7 +2,7 @@
 	import { fade } from 'svelte/transition'
 	import LogoIcon from '$lib/icons/LogoIcon.svelte'
 	import LoadingIcon from '$lib/icons/LoadingIcon.svelte'
-	import { isMapReady } from '$lib/stores' // Importa a store
+	import { isMapReady } from '$lib/stores/' // Importa a store
 </script>
 
 {#if !$isMapReady}

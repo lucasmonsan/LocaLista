@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { supabase } from '$lib/supabaseClient'
-	import { selectedLocation } from '$lib/stores'
+	import { supabase } from '$lib/services/supabase'
+	import { selectedLocation } from '$lib/stores/'
 	import LoadingIcon from '$lib/icons/LoadingIcon.svelte'
 
 	// Props para comunicar com o pai

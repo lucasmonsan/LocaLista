@@ -1,9 +1,11 @@
 <script lang="ts">
-	import { selectedLocation } from '$lib/stores'
+	import { selectedLocation } from '$lib/stores/'
 	import { fade, fly } from 'svelte/transition'
 
-	// Função fictícia para abrir o form (faremos depois)
 	const confirmLocation = () => {
+		// Proteção contra nulo para o TypeScript
+		if (!$selectedLocation) return
+
 		alert('Abrir formulário para: ' + $selectedLocation.nome)
 	}
 </script>
@@ -26,12 +28,12 @@
 {/if}
 
 <style>
+	/* CSS Original */
 	.card {
 		position: fixed;
-		bottom: calc(var(--xxxxl) + var(--xl)); /* Acima da barra de pesquisa */
+		bottom: calc(var(--xxxxl) + var(--xl));
 		left: 50%;
-		transform: translateX(-50%) !important; /* Centraliza (força bruta no svelte transition) */
-
+		transform: translateX(-50%) !important;
 		width: 90%;
 		max-width: 400px;
 		background: var(--bg-color);
@@ -39,22 +41,18 @@
 		border-radius: var(--radius-2);
 		box-shadow: var(--shadow-black);
 		z-index: var(--z-modal);
-
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
 		gap: var(--sm);
 	}
-
 	.info {
 		display: flex;
 		flex-direction: column;
 	}
-
 	small {
 		color: var(--subtext-color);
 	}
-
 	button {
 		padding: var(--xs) var(--md);
 		border: none;
@@ -62,9 +60,12 @@
 		font-weight: bold;
 		cursor: pointer;
 	}
-
 	.btn-confirm {
 		background-color: var(--primary-color);
 		color: white;
 	}
+	.btn-primary {
+		background-color: var(--secondary-color);
+		color: var(--text-color);
+	} /* Ajuste de cor opcional */
 </style>

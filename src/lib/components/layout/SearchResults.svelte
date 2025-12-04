@@ -1,23 +1,23 @@
 <script lang="ts">
-	export let results: any[] = []
-	export let onSelect: (item: any) => void
+	import type { PhotonFeature } from '$lib/types//'
 
-	function select(item: any) {
-		if (onSelect) onSelect(item)
-	}
+	export let results: PhotonFeature[] = []
+	export let onSelect: (item: PhotonFeature) => void
 </script>
 
 <ul>
 	{#each results as item}
 		<li>
-			<button type="button" on:click={() => select(item)}>
-				<strong>
-					{item.properties.name || item.properties.street || 'Local sem nome'}
-				</strong>
-				<small>
-					{item.properties.city || item.properties.town || ''},
-					{item.properties.state || ''}
-				</small>
+			<button on:click={() => onSelect(item)}>
+				<div class="icon-marker">📍</div>
+				<div class="text-info">
+					<strong>{item.properties.name || item.properties.street || 'Local sem nome'}</strong>
+					<small>
+						{#if item.properties.district}{item.properties.district} -
+						{/if}
+						{item.properties.city || item.properties.town || ''}
+					</small>
+				</div>
 			</button>
 		</li>
 	{/each}
@@ -26,11 +26,10 @@
 <style>
 	ul {
 		list-style: none;
-		margin: 0;
 		padding: 0;
-		background: var(--bg-color);
-		border-top: var(--border) var(--subbg-color);
-		border-bottom: var(--border) var(--subbg-color);
+		margin: 0;
+		max-height: 200px; /* Limite de altura para scroll */
+		overflow-y: auto;
 	}
 
 	li {
@@ -43,26 +42,37 @@
 
 	button {
 		width: 100%;
-		padding: var(--sm);
 		background: transparent;
 		border: none;
+		padding: var(--sm);
+		display: flex;
+		align-items: center;
+		gap: var(--sm);
 		text-align: left;
 		cursor: pointer;
-		display: flex;
-		flex-direction: column;
-		color: var(--text-color);
-		transition: background 0.125s ease-in-out;
+		transition: background-color 0.2s;
 	}
 
 	button:hover {
-		background-color: rgba(0, 0, 0, 0.05);
+		background-color: rgba(0, 0, 0, 0.03);
+	}
+
+	.icon-marker {
+		font-size: 1.2rem;
+	}
+
+	.text-info {
+		display: flex;
+		flex-direction: column;
 	}
 
 	strong {
-		font-size: 1rem;
+		font-size: 0.95rem;
+		color: var(--text-color);
 	}
+
 	small {
 		font-size: 0.8rem;
-		opacity: 0.7;
+		color: var(--subtext-color);
 	}
 </style>

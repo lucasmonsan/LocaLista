@@ -1,11 +1,12 @@
 <script lang="ts">
-	import { isProfileOpen, user, selectedLocation, mapView, showToast } from '$lib/stores'
-	import { supabase } from '$lib/supabaseClient'
+	import { isProfileOpen, user, selectedLocation, mapView, showToast } from '$lib/stores/'
+	import { supabase } from '$lib/services/supabase'
 	import { fly, fade } from 'svelte/transition'
 	import XIcon from '$lib/icons/XIcon.svelte'
 	import GoogleIcon from '$lib/icons/GoogleIcon.svelte'
 	import LoadingIcon from '$lib/icons/LoadingIcon.svelte'
-	import StarRating from '$lib/components/ui/StarRating.svelte' // Reutilizando estrelas
+	import StarRating from '$lib/components/ui/StarRating.svelte'
+	import type { Review } from '$lib/types/'
 
 	let loading = false
 
@@ -18,12 +19,12 @@
 
 	// Profile Navigation
 	let view: 'menu' | 'reviews' = 'menu'
-	let myReviews: any[] = []
+	let myReviews: Review[] = []
 	let isLoadingReviews = false
 
 	function close() {
 		isProfileOpen.set(false)
-		view = 'menu' // Reseta para o menu ao fechar
+		view = 'menu'
 	}
 
 	// --- AUTH LOGIC ---
@@ -37,16 +38,16 @@
 			if (error) throw error
 		} catch (err) {
 			console.error(err)
-			alert('Erro ao conectar com Google.')
+			showToast('Erro ao conectar com Google.', 'error')
 			loading = false
 		}
 	}
 
 	async function handleEmail() {
-		if (!email || !password) return alert('Preencha email e senha.')
+		if (!email || !password) return showToast('Preencha email e senha.', 'error')
 		if (isRegister) {
-			if (!fullName) return alert('Digite seu nome completo.')
-			if (password !== confirmPassword) return alert('As senhas não coincidem.')
+			if (!fullName) return showToast('Digite seu nome completo.', 'error')
+			if (password !== confirmPassword) return showToast('As senhas não coincidem.', 'error')
 		}
 
 		loading = true
@@ -66,7 +67,7 @@
 				close()
 			}
 		} catch (err: any) {
-			if (err.message.includes('already registered')) {
+			if (err.message?.includes('already registered')) {
 				showToast('E-mail já cadastrado. Faça login.', 'error')
 			} else {
 				showToast(err.message || 'Erro na autenticação.', 'error')
@@ -82,24 +83,19 @@
 	}
 
 	// --- MY REVIEWS LOGIC ---
-
 	async function openMyReviews() {
 		view = 'reviews'
 		isLoadingReviews = true
+		if (!$user) return
 
 		try {
-			// Busca reviews do usuário logado + dados do local (join)
-			const { data, error } = await supabase
-				.from('reviews')
-				.select('*, locais(*)') // Pega tudo da review e tudo do local relacionado
-				.eq('user_id', $user.id)
-				.order('created_at', { ascending: false })
+			const { data, error } = await supabase.from('reviews').select('*, locais(*)').eq('user_id', $user.id).order('created_at', { ascending: false })
 
 			if (error) throw error
-			myReviews = data || []
+			myReviews = (data as unknown as Review[]) || []
 		} catch (err) {
 			console.error(err)
-			alert('Erro ao carregar suas reviews.')
+			showToast('Erro ao carregar suas reviews.', 'error')
 		} finally {
 			isLoadingReviews = false
 		}
@@ -110,33 +106,26 @@
 
 		try {
 			const { error } = await supabase.from('reviews').delete().eq('id', reviewId)
-
 			if (error) throw error
 
-			// Remove da lista localmente
 			myReviews = myReviews.filter(r => r.id !== reviewId)
-
-			// Força atualização do mapa (para mudar cor do pin se necessário)
 			mapView.update(v => ({ ...v, trigger: Date.now() }))
+			showToast('Avaliação excluída.', 'success')
 		} catch (err) {
 			console.error(err)
-			alert('Erro ao excluir.')
+			showToast('Erro ao excluir.', 'error')
 		}
 	}
 
-	function goToReview(review: any) {
-		// 1. Fecha o perfil
+	function goToReview(review: Review) {
+		if (!review.locais) return
 		close()
-
-		// 2. Move o mapa para o local
 		mapView.set({
 			lat: review.locais.lat,
 			lon: review.locais.lon,
 			zoom: 18,
 			trigger: Date.now(),
 		})
-
-		// 3. Seleciona o local (Abre a BottomSheet do local)
 		selectedLocation.set(review.locais)
 	}
 </script>
@@ -184,7 +173,6 @@
 													<p class="comment-preview">{review.comentario}</p>
 												{/if}
 											</div>
-
 											<button class="delete-btn" on:click|stopPropagation={() => handleDelete(review.id)}> 🗑️ </button>
 										</div>
 									</li>
@@ -236,6 +224,7 @@
 {/if}
 
 <style>
+	/* CSS Original mantido integralmente */
 	.sheet {
 		position: fixed;
 		bottom: 0;
@@ -262,7 +251,6 @@
 		background: rgba(0, 0, 0, 0.5);
 		z-index: calc(var(--z-modal) - 1);
 	}
-
 	.header {
 		position: relative;
 		display: flex;
@@ -293,11 +281,9 @@
 		width: 100%;
 		height: 100%;
 	}
-
 	.content {
 		padding: 0 var(--md) var(--md);
 	}
-
 	h3 {
 		margin: 0 0 var(--xs);
 		font-size: 1.4rem;
@@ -309,8 +295,6 @@
 		color: var(--subtext-color);
 		font-size: 0.95rem;
 	}
-
-	/* Auth & Menu Styles */
 	.btn-google {
 		width: 100%;
 		display: flex;
@@ -374,7 +358,6 @@
 		width: 100%;
 		text-decoration: underline;
 	}
-
 	.menu {
 		display: flex;
 		flex-direction: column;
@@ -395,8 +378,6 @@
 		background: #ffebee;
 		color: #c62828;
 	}
-
-	/* --- Styles da Lista de Reviews --- */
 	.sub-header {
 		display: flex;
 		align-items: center;
@@ -417,7 +398,6 @@
 		text-align: center;
 		font-size: 1.1rem;
 	}
-
 	.reviews-list {
 		list-style: none;
 		padding: 0;
@@ -426,7 +406,6 @@
 		flex-direction: column;
 		gap: var(--sm);
 	}
-
 	.review-item {
 		display: flex;
 		justify-content: space-between;
@@ -441,7 +420,6 @@
 	.review-item:hover {
 		background-color: rgba(0, 0, 0, 0.02);
 	}
-
 	.review-info {
 		flex: 1;
 		display: flex;
@@ -465,7 +443,6 @@
 		text-overflow: ellipsis;
 		max-width: 250px;
 	}
-
 	.delete-btn {
 		background: none;
 		border: none;
@@ -479,7 +456,6 @@
 		opacity: 1;
 		transform: scale(1.1);
 	}
-
 	.empty-msg {
 		text-align: center;
 		color: var(--subtext-color);

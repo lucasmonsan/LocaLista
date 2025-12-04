@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { supabase } from '$lib/supabaseClient'
-	// ATUALIZADO: Import showToast
-	import { selectedLocation, mapView, user, showToast } from '$lib/stores'
+	import { supabase } from '$lib/services/supabase'
+	import { selectedLocation, mapView, user, showToast } from '$lib/stores/'
 	import StarRating from '$lib/components/ui/StarRating.svelte'
 	import TagsInput from '$lib/components/ui/TagsInput.svelte'
 	import LoadingIcon from '$lib/icons/LoadingIcon.svelte'
@@ -9,7 +8,6 @@
 	export let onCancel: () => void
 	export let onSuccess: () => void
 
-	// ... variáveis iguais ...
 	let formRating = 0
 	let formTags: string[] = []
 	let formComment = ''
@@ -18,6 +16,7 @@
 	let formSemNumero = false
 	let isSubmitting = false
 
+	// Reatividade para o checkbox S/N
 	$: if (formSemNumero) {
 		formNumero = 'S/N'
 	} else if (formNumero === 'S/N') {
@@ -25,18 +24,19 @@
 	}
 
 	async function submitReview() {
-		// MUDANÇA: Alerts viram Toasts
+		// Validação
 		if (formRating === 0) return showToast('Selecione uma nota!', 'error')
 		if (!formSemNumero && !formNumero.trim()) return showToast('Digite o número ou marque "Sem número".', 'error')
-
 		if (isSubmitting) return
+
 		isSubmitting = true
 
 		try {
+			if (!$selectedLocation) throw new Error('Local não selecionado')
 			let localId = $selectedLocation.id
 
+			// 1. Se o local não tem ID (é novo), cria no banco 'locais'
 			if (!localId) {
-				// ... lógica de criar local igual ...
 				const osm_id = $selectedLocation.endereco?.properties?.osm_id
 					? `${$selectedLocation.endereco.properties.osm_type}/${$selectedLocation.endereco.properties.osm_id}`
 					: `custom/${Date.now()}`
@@ -62,6 +62,7 @@
 				localId = newLocal.id
 			}
 
+			// 2. Insere a Review
 			const userId = $user ? $user.id : null
 
 			const { error: reviewError } = await supabase.from('reviews').insert({
@@ -74,15 +75,14 @@
 
 			if (reviewError) throw reviewError
 
-			// MUDANÇA: Sucesso via Toast
 			showToast('Avaliação enviada com sucesso!', 'success')
 
-			selectedLocation.update(l => ({ ...l, id: localId }))
-			mapView.update(v => ({ ...v, trigger: Date.now() }))
+			// Atualiza UI
+			selectedLocation.update(l => (l ? { ...l, id: localId } : null))
+			mapView.update(v => ({ ...v, trigger: Date.now() })) // Força reload dos pins no mapa
 			onSuccess()
 		} catch (err) {
 			console.error(err)
-			// MUDANÇA: Erro via Toast
 			showToast('Erro ao salvar avaliação.', 'error')
 		} finally {
 			isSubmitting = false
@@ -133,7 +133,7 @@
 </div>
 
 <style>
-	/* ... CSS igual ... */
+	/* CSS Original mantido */
 	.form-container {
 		display: flex;
 		flex-direction: column;

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte'
-	import { user } from '$lib/stores'
-	import { supabase } from '$lib/supabaseClient'
+	import { user } from '$lib/stores/'
+	import { supabase } from '$lib/services/supabase'
 	import favicon from '$lib/assets/favicon.svg'
 	import Splash from '$lib/components/ui/Splash.svelte' // Ajuste se mudou a pasta
 	import '$lib/styles/all.css'

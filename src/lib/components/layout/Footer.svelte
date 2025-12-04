@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { slide } from 'svelte/transition'
+
+	// Ícones UI
 	import SearchIcon from '$lib/icons/SearchIcon.svelte'
 	import XIcon from '$lib/icons/XIcon.svelte'
 	import GpsIcon from '$lib/icons/GpsIcon.svelte'
@@ -8,61 +10,54 @@
 
 	import SearchResults from '$lib/components/layout/SearchResults.svelte'
 
-	// Adicionado userPosition e user
-	import { mapView, currentMapCenter, selectedLocation, highlightGeometry, lastSearchedLocation, isProfileOpen, userPosition, user, setPersistentToast } from '$lib/stores'
+	// Stores e Services
+	import { mapView, currentMapCenter, selectedLocation, highlightGeometry, lastSearchedLocation, isProfileOpen, userPosition, user, setPersistentToast } from '$lib/stores/' // Mantendo a barra final que funcionou pra você
+
+	import { searchAddress, getOsmGeometry } from '$lib/services/geocoding'
+	import type { PhotonFeature } from '$lib/types//'
 
 	let searchInput = ''
 	let inputRef: HTMLInputElement
 	let isLoading = false
-	let results: any[] = []
+	let results: PhotonFeature[] = []
 	let searchError = ''
 	let isFocused = false
 	let isGpsLoading = false
 
-	// Helper para Avatar
+	// --- LÓGICA DE UI ---
 	function getUserAvatar() {
 		if (!$user) return null
 		const avatar = $user.user_metadata?.avatar_url
 		if (avatar) return { type: 'image', src: avatar }
+
 		const name = $user.user_metadata?.full_name || $user.email
 		const initial = name ? name[0].toUpperCase() : '?'
 		return { type: 'text', content: initial }
 	}
 
-	// --- NOVA LÓGICA DE GPS ---
-	// Verifica se o mapa está centralizado no usuário
 	let isGpsActive = false
-
 	$: if ($userPosition && $currentMapCenter) {
 		const latDiff = Math.abs($userPosition.lat - $currentMapCenter.lat)
 		const lonDiff = Math.abs($userPosition.lon - $currentMapCenter.lon)
-		// Se a diferença for muito pequena, consideramos centralizado
 		isGpsActive = latDiff < 0.0005 && lonDiff < 0.0005
 	}
 
+	// --- AÇÕES ---
 	const handleGPS = () => {
 		isGpsLoading = true
 
-		// Se já temos a posição na store (watchPosition rodando), é instantâneo
 		if ($userPosition) {
-			mapView.set({
-				lat: $userPosition.lat,
-				lon: $userPosition.lon,
-				zoom: 17,
-				trigger: Date.now(),
-			})
-			// Atualiza centro para ativar o azul imediatamente
+			// Se já temos posição, é instantâneo
+			mapView.set({ lat: $userPosition.lat, lon: $userPosition.lon, zoom: 17, trigger: Date.now() })
 			currentMapCenter.set({ lat: $userPosition.lat, lon: $userPosition.lon })
 			isGpsLoading = false
 		} else {
-			// Fallback se a store estiver vazia (primeiro uso ou erro)
+			// Solicita ao navegador (fallback)
 			navigator.geolocation.getCurrentPosition(
 				pos => {
 					const { latitude, longitude } = pos.coords
-					// Atualiza store
 					userPosition.set({ lat: latitude, lon: longitude })
 					mapView.set({ lat: latitude, lon: longitude, zoom: 17, trigger: Date.now() })
-					currentMapCenter.set({ lat: latitude, lon: longitude })
 					isGpsLoading = false
 				},
 				err => {
@@ -82,20 +77,14 @@
 		searchError = ''
 
 		try {
-			const center = $currentMapCenter
-			const params = new URLSearchParams({
-				q: searchInput,
-				lat: center.lat.toFixed(6),
-				lon: center.lon.toFixed(6),
-				limit: '8',
-			})
-			const response = await fetch(`https://photon.komoot.io/api/?${params}`)
-			const data = await response.json()
+			// REFACTOR: Usa o serviço centralizado
+			const rawResults = await searchAddress(searchInput, $currentMapCenter.lat, $currentMapCenter.lon)
 
-			if (data.features && data.features.length > 0) {
+			if (rawResults.length > 0) {
+				// Filtra duplicatas e limita
 				const seen = new Set()
-				results = data.features
-					.filter((f: any) => {
+				results = rawResults
+					.filter(f => {
 						if (f.properties.countrycode !== 'BR') return false
 						const key = `${f.properties.name}-${f.properties.city || f.properties.town}`
 						if (seen.has(key)) return false
@@ -103,6 +92,7 @@
 						return true
 					})
 					.slice(0, 5)
+
 				if (results.length === 0) searchError = 'Nenhum local relevante encontrado.'
 			} else {
 				searchError = 'Nenhum local encontrado.'
@@ -114,10 +104,10 @@
 		}
 	}
 
-	async function onSelectResult(item: any) {
+	async function onSelectResult(item: PhotonFeature) {
 		const [lon, lat] = item.geometry.coordinates
-		const nomeOficial = item.properties.name || item.properties.street
-		const cidade = item.properties.city || item.properties.town
+		const nomeOficial = item.properties.name || item.properties.street || 'Local'
+		const cidade = item.properties.city || item.properties.town || ''
 
 		searchInput = cidade ? `${nomeOficial}, ${cidade}` : nomeOficial
 		inputRef.blur()
@@ -125,37 +115,31 @@
 
 		mapView.set({ lat, lon, zoom: 17, trigger: Date.now() })
 
-		// Highlight Logic ...
+		// REFACTOR: Lógica de Highlight isolada no serviço
 		const osmType = item.properties.osm_type
 		const osmId = item.properties.osm_id
+
 		highlightGeometry.set(null)
 		lastSearchedLocation.set(item)
 
 		if (osmType && osmId) {
-			try {
-				const url = `https://nominatim.openstreetmap.org/lookup?osm_ids=${osmType.toUpperCase()}${osmId}&polygon_geojson=1&format=json`
-				const resp = await fetch(url)
-				const data = await resp.json()
-				if (data && data.length > 0 && data[0].geojson) {
-					highlightGeometry.set(data[0].geojson)
-				}
-			} catch (err) {
-				console.error('Erro highlight:', err)
-			}
+			const geometry = await getOsmGeometry(osmType, osmId)
+			if (geometry) highlightGeometry.set(geometry)
 		}
 
 		if (osmType === 'N') {
+			// É um Node (Ponto exato), abre review direto
 			selectedLocation.set({
 				id: null,
-				nome: nomeOficial || 'Local selecionado',
+				nome: nomeOficial,
 				cidade: cidade,
 				endereco: item,
 				lat: lat,
 				lon: lon,
 			})
 		} else {
+			// É uma Rua/Bairro, pede pro usuário clicar no lote
 			selectedLocation.set(null)
-			// MUDANÇA: Usa Toast Persistente (Instrução)
 			setPersistentToast('📍 Local encontrado! Toque no ponto exato do imóvel para avaliar.')
 		}
 	}
@@ -165,7 +149,7 @@
 		results = []
 		searchError = ''
 		highlightGeometry.set(null)
-		setPersistentToast(null) // Limpa instrução se cancelar
+		setPersistentToast(null)
 		inputRef.focus()
 	}
 </script>
@@ -235,6 +219,7 @@
 </footer>
 
 <style>
+	/* Mantenha seu CSS original aqui (não mudei nada no estilo) */
 	footer {
 		position: fixed;
 		bottom: var(--lg);
@@ -253,50 +238,40 @@
 	footer.hidden {
 		transform: translateY(150%);
 	}
-
 	.controls-row {
 		display: flex;
 		align-items: center;
 		gap: var(--xs);
 		height: var(--xxxxl);
 	}
-
 	.icon-btn {
 		width: var(--xxxxl);
-		height: 100%; /* Altura da linha do footer */
-		padding: 0; /* Padding interno */
+		height: 100%;
+		padding: 0;
 		border-radius: var(--radius-2);
 		background-color: var(--bg-color);
 		box-shadow: var(--shadow-black);
 		border: none;
-
 		display: flex;
 		align-items: center;
 		justify-content: center;
-
 		transition:
 			background var(--fast),
 			color var(--fast);
-
-		/* ADIÇÕES CRÍTICAS PARA O AVATAR: */
-		overflow: hidden; /* Corta a imagem se ela for maior */
-		flex-shrink: 0; /* Impede o botão de ser espremido */
+		overflow: hidden;
+		flex-shrink: 0;
 		position: relative;
 	}
 	.icon-btn:active {
 		transform: scale(0.95);
 	}
-
-	/* Estilos do GPS Ativo */
 	.gps-btn.active {
 		color: var(--primary-color);
 	}
-
-	/* Estilos do Avatar */
 	.avatar-img {
 		width: 100%;
 		height: 100%;
-		object-fit: cover; /* Garante que a imagem preencha sem distorcer */
+		object-fit: cover;
 		display: block;
 	}
 	.avatar-text {
@@ -310,7 +285,6 @@
 		align-items: center;
 		justify-content: center;
 	}
-
 	.search-input-group {
 		flex: 1;
 		height: 100%;
@@ -331,7 +305,6 @@
 		color: var(--text-color);
 		min-width: 0;
 	}
-
 	.action-btn {
 		width: var(--xxxxl);
 		height: 100%;
@@ -343,12 +316,10 @@
 		justify-content: center;
 		color: var(--subtext-color);
 	}
-	/* Força tamanho do ícone */
 	.action-btn :global(svg) {
 		width: 24px;
 		height: 24px;
 	}
-
 	.expand-wrapper {
 		width: 100%;
 	}
@@ -358,7 +329,6 @@
 		box-shadow: var(--shadow-black);
 		overflow: hidden;
 	}
-
 	.tips {
 		padding: var(--sm);
 		font-size: 0.9rem;
@@ -378,7 +348,6 @@
 		text-align: center;
 		background: #ffcdd2;
 	}
-
 	.loader-wrap {
 		width: 24px;
 		height: 24px;
