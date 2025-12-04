@@ -11,5 +11,16 @@
 	"jsxSingleQuote": false,
 	"quoteProps": "as-needed",
 	"proseWrap": "always",
-	"htmlWhitespaceSensitivity": "css"
+	"htmlWhitespaceSensitivity": "css",
+	"plugins": [
+		"prettier-plugin-svelte"
+	],
+	"overrides": [
+		{
+			"files": "*.svelte",
+			"options": {
+				"parser": "svelte"
+			}
+		}
+	]
 }

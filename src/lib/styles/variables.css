@@ -1,0 +1,36 @@
+:root {
+  --base: clamp(1rem, 1vw + 0.5rem, 1.5rem);
+
+	--xxs: calc(var(--base) * 0.25);
+	--xs: calc(var(--base) * 0.5);
+	--sm: calc(var(--base) * 0.75);
+	--md: var(--base);
+	--lg: calc(var(--base) * 1.25);
+	--xl: calc(var(--base) * 1.5);
+	--xxl: calc(var(--base) * 1.75);
+	--xxxl: calc(var(--base) * 2);
+	--xxxxl: calc(var(--base) * 2.5);
+
+  --fast: ease-in-out 0.125s;
+	--normal: ease-in-out 0.25s;
+	--slow: ease-in-out 0.375s;
+
+  --radius-1: var(--xxs);
+	--radius-2: var(--xs);
+	--radius-3: var(--sm);
+
+  --padd-page: var(--sm);
+	--padd-component: var(--xs);
+
+  --border: 2px solid;
+
+  --z-map: 0;
+	--z-blur: 1;
+	--z-search: 2;
+	--z-modal: 5;
+	--z-splash: 9;
+
+	--shadow-white: rgba(255, 255, 255, 0.25) 0px 8px 24px;
+	--shadow-black: rgba(0, 0, 0, 0.25) 0px 8px 24px;
+	--text-shadow-white: rgba(255, 255, 255, 0.25) 0px 8px 24px;
+}
